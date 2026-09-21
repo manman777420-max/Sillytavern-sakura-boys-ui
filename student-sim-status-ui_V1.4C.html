@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>学生时代模拟器 · 状态栏</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f4efe6;
+      --paper: rgba(255, 253, 248, 0.96);
+      --paper-2: #f8f3ea;
+      --ink: #3c3833;
+      --muted: #8c8378;
+      --line: #ded5c9;
+      --accent: #748c78;
+      --accent-soft: #e6ede5;
+      --warm: #b58a66;
+      --danger: #a96f69;
+      --shadow: 0 10px 30px rgba(63, 52, 40, 0.08);
+    }
+
+    body {
+      margin: 0;
+      padding: 14px;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,.8), transparent 35%),
+        var(--bg);
+      color: var(--ink);
+      font-family:
+        "Noto Sans SC",
+        "Microsoft YaHei",
+        system-ui,
+        sans-serif;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    .panel {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    /* =========================
+       顶部
+       ========================= */
+
+    .hero {
+      padding: 20px 20px 17px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(
+          135deg,
+          rgba(230,237,229,.9),
+          rgba(255,253,248,.95)
+        );
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .date {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+
+    .time {
+      margin-top: 3px;
+      font-family: Georgia, serif;
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .weather {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.65);
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .location {
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .period {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    /* =========================
+       人物概要
+       ========================= */
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .name {
+      font-size: 19px;
+      font-weight: 700;
+    }
+
+    .meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mood {
+      align-self: center;
+      padding: 7px 11px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      color: #536858;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    /* =========================
+       核心状态
+       ========================= */
+
+    .core {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .core-card {
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--paper-2);
+    }
+
+    .core-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 7px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .core-value {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .bar {
+      height: 5px;
+      overflow: hidden;
+      border-radius: 99px;
+      background: #e5ddd2;
+    }
+
+    .bar > div {
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width .3s ease;
+    }
+
+    /* =========================
+       Tab
+       ========================= */
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px;
+      gap: 5px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(248,243,234,.65);
+    }
+
+    .tab {
+      border: 0;
+      padding: 9px 6px;
+      border-radius: 9px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font: inherit;
+      font-size: 12px;
+    }
+
+    .tab:hover {
+      background: rgba(255,255,255,.7);
+    }
+
+    .tab.active {
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 2px 8px rgba(60,50,40,.06);
+      font-weight: 600;
+    }
+
+    .content {
+      min-height: 220px;
+      padding: 18px 20px 21px;
+    }
+
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* =========================
+       通用布局
+       ========================= */
+
+    .section-title {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .1em;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .stat {
+      padding: 11px 8px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      text-align: center;
+    }
+
+    .stat-name {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .stat-value {
+      margin-top: 3px;
+      font-family: Georgia, serif;
+      font-size: 20px;
+    }
+
+    .info-list {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 10px 2px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .info-label {
+      color: var(--muted);
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 13px;
+    }
+
+    .tag {
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #5c6e60;
+      font-size: 11px;
+    }
+
+    /* =========================
+       关系
+       ========================= */
+
+    .relation-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .relation {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .relation-name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .relation-type {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .favor {
+      align-self: center;
+      min-width: 36px;
+      padding: 5px 7px;
+      border-radius: 8px;
+      background: var(--paper-2);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .favor.positive {
+      color: #56725d;
+    }
+
+    .favor.negative {
+      color: var(--danger);
+    }
+
+    /* =========================
+       背包
+       ========================= */
+
+    .item-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .item {
+      padding: 12px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .item-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .item-description {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .empty {
+      padding: 35px 10px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .footer {
+      padding: 9px 14px;
+      border-top: 1px solid var(--line);
+      color: #aaa096;
+      text-align: center;
+      font-size: 9px;
+      letter-spacing: .08em;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 8px;
+      }
+
+      .panel {
+        border-radius: 14px;
+      }
+
+      .core {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .hero,
+      .summary,
+      .core,
+      .content {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="app">
+    <section class="panel">
+
+      <!-- 顶部世界信息 -->
+      <header class="hero">
+
+        <div class="hero-top">
+          <div>
+            <div class="date" id="date">2003-08-27</div>
+            <div class="time" id="time">23:45</div>
+          </div>
+
+          <div class="weather" id="weather">晴</div>
+        </div>
+
+        <div class="location" id="location">
+          阳光小学 / 教学楼前报名处
+        </div>
+
+        <div class="period" id="period">
+          小学新生报名日
+        </div>
+
+      </header>
+
+
+      <!-- 主角概要 -->
+      <section class="summary">
+
+        <div>
+          <div class="name" id="player-name">未登记</div>
+
+          <div class="meta">
+            <span id="player-age">7岁</span>
+            ·
+            <span id="player-gender">未登记</span>
+            ·
+            阅历
+            <span id="experience">20</span>
+          </div>
+        </div>
+
+        <div class="mood" id="mood">
+          平静释然
+        </div>
+
+      </section>
+
+
+      <!-- 四项核心状态 -->
+      <section class="core" id="core-status"></section>
+
+
+      <!-- Tabs -->
+      <nav class="tabs">
+
+        <button class="tab active" data-page="character">
+          角色
+        </button>
+
+        <button class="tab" data-page="school">
+          学校
+        </button>
+
+        <button class="tab" data-page="relations">
+          关系
+        </button>
+
+        <button class="tab" data-page="items">
+          背包
+        </button>
+
+      </nav>
+
+
+      <section class="content">
+
+        <!-- 角色 -->
+        <div class="page active" id="page-character">
+
+          <h3 class="section-title">主要属性</h3>
+
+          <div class="stat-grid" id="attributes"></div>
+
+          <h3 class="section-title" style="margin-top:20px;">
+            当前状态
+          </h3>
+
+          <div class="info-list" id="condition-info"></div>
+
+          <div class="tag-list" id="status-tags"></div>
+
+        </div>
+
+
+        <!-- 学校 -->
+        <div class="page" id="page-school">
+
+          <h3 class="section-title">校园信息</h3>
+
+          <div class="info-list" id="school-info"></div>
+
+        </div>
+
+
+        <!-- 关系 -->
+        <div class="page" id="page-relations">
+
+          <h3 class="section-title">家庭</h3>
+
+          <div class="relation-list" id="family-relations"></div>
+
+          <h3 class="section-title" style="margin-top:20px;">
+            人物关系
+          </h3>
+
+          <div class="relation-list" id="npc-relations"></div>
+
+        </div>
+
+
+        <!-- 背包 -->
+        <div class="page" id="page-items">
+
+          <h3 class="section-title">
+            持有物品
+          </h3>
+
+          <div class="item-list" id="item-list"></div>
+
+        </div>
+
+      </section>
+
+
+      <footer class="footer">
+        STUDENT ERA · STATUS
+      </footer>
+
+    </section>
+  </main>
+
+
+  <script>
+(() => {
+  "use strict";
+
+  const $ = id => document.getElementById(id);
+  const clamp = (n, min = 0, max = 100) => {
+    n = Number(n);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : min;
+  };
+  const text = (v, fallback = "—") =>
+    v === undefined || v === null || v === "" ? fallback : String(v);
+  const escapeHTML = value =>
+    text(value, "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+
+  let currentData = null;
+  let hasReceivedRealData = false;
+
+  const demoData = {
+    world: {
+      date: "2003-08-27",
+      time: "23:45",
+      location: "阳光小学 / 教学楼前报名处",
+      weather: "晴",
+      period: "小学新生报名日"
+    },
+    player: {
+      name: "未登记",
+      gender: "未登记",
+      age: 7,
+      age_text: "7岁",
+      birthday: "—"
+    },
+    attributes: { iq: 50, eq: 50, physique: 50, charm: 50, luck: 50 },
+    condition: {
+      health: 100, energy: 100, stress: 4, happiness: 66,
+      satiety: 80, cleanliness: 80, mood: "平静释然",
+      sleeping: true, temp_status: "无", perm_status: "无"
+    },
+    growth: { experience: 20, talents: "暂无" },
+    appearance: { height: "—", weight: "—", clothes: "—", temperament: "—" },
+    family: {
+      income_level: "—", education_style: "—", parent_personality: "—",
+      father: { name: "江父", relation: "父亲", favor: 70, impression: "" },
+      mother: { name: "江母", relation: "母亲", favor: 72, impression: "" }
+    },
+    school: {
+      school_name: "阳光小学", stage: "小学", grade: 1, semester: "入学前",
+      class_name: "—", academic_level: "未评定", action_left: 2, action_total: 2
+    },
+    resources: { money: 0, items: [] },
+    relationships: [
+      { name: "李小萌", relation: "前桌同学", favor: 1, impression: "", met: true },
+      { name: "王浩", relation: "男生头目", favor: -2, impression: "", met: true }
+    ]
+  };
+
+  function setText(id, value, fallback = "—") {
+    const el = $(id);
+    if (el) el.textContent = text(value, fallback);
+  }
+
+  function row(label, value) {
+    return `<div class="info-row"><span class="info-label">${escapeHTML(label)}</span><span>${escapeHTML(value)}</span></div>`;
+  }
+
+  function favorClass(value) {
+    const n = Number(value) || 0;
+    return n > 0 ? "positive" : n < 0 ? "negative" : "";
+  }
+
+  function relationCard(person) {
+    if (!person) return "";
+    const favor = Number(person.favor) || 0;
+    const impression = text(person.impression, "");
+    return `
+      <div class="relation">
+        <div>
+          <div class="relation-name">${escapeHTML(text(person.name, "未命名"))}</div>
+          <div class="relation-type">${escapeHTML(text(person.relation, "认识的人"))}</div>
+          ${impression ? `<div class="item-description">${escapeHTML(impression)}</div>` : ""}
+        </div>
+        <div class="favor ${favorClass(favor)}">${favor}</div>
+      </div>`;
+  }
+
+  function renderCore(condition = {}) {
+    const items = [
+      ["健康", condition.health],
+      ["精力", condition.energy],
+      ["压力", condition.stress],
+      ["快乐", condition.happiness]
+    ];
+    $("core-status").innerHTML = items.map(([label, value]) => {
+      const n = clamp(value);
+      return `
+        <div class="core-card">
+          <div class="core-head">
+            <span>${label}</span>
+            <span class="core-value">${escapeHTML(text(value, 0))}</span>
+          </div>
+          <div class="bar"><div style="width:${n}%"></div></div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderCharacter(data) {
+    const a = data.attributes || {};
+    const c = data.condition || {};
+    const g = data.growth || {};
+    const ap = data.appearance || {};
+
+    const attrs = [
+      ["智商", a.iq], ["情商", a.eq], ["体魄", a.physique],
+      ["魅力", a.charm], ["幸运", a.luck]
+    ];
+    $("attributes").innerHTML = attrs.map(([name, value]) => `
+      <div class="stat">
+        <div class="stat-name">${name}</div>
+        <div class="stat-value">${escapeHTML(text(value, 0))}</div>
+      </div>`).join("");
+
+    $("condition-info").innerHTML = [
+      row("饱腹", text(c.satiety, 0)),
+      row("清洁", text(c.cleanliness, 0)),
+      row("睡眠", c.sleeping === true ? "睡眠中" : "清醒"),
+      row("零花钱", text(data.resources?.money, 0)),
+      row("天赋", text(g.talents, "暂无")),
+      row("身高", text(ap.height)),
+      row("体重", text(ap.weight)),
+      row("衣着", text(ap.clothes)),
+      row("气质", text(ap.temperament))
+    ].join("");
+
+    const tags = [];
+    const temp = text(c.temp_status, "无");
+    const perm = text(c.perm_status, "无");
+    if (temp !== "无" && temp !== "—") tags.push(temp);
+    if (perm !== "无" && perm !== "—") tags.push(perm);
+    $("status-tags").innerHTML = tags.length
+      ? tags.map(v => `<span class="tag">${escapeHTML(v)}</span>`).join("")
+      : `<span class="tag">当前无特殊状态</span>`;
+  }
+
+  function renderSchool(data) {
+    const s = data.school || {};
+    $("school-info").innerHTML = [
+      row("学校", text(s.school_name)),
+      row("阶段", text(s.stage)),
+      row("年级", text(s.grade)),
+      row("学期", text(s.semester)),
+      row("班级", text(s.class_name)),
+      row("学业水平", text(s.academic_level)),
+      row("行动次数", `${text(s.action_left, 0)} / ${text(s.action_total, 0)}`)
+    ].join("");
+  }
+
+  function renderRelations(data) {
+    const f = data.family || {};
+    const family = [f.father, f.mother].filter(Boolean);
+    $("family-relations").innerHTML = family.length
+      ? family.map(relationCard).join("")
+      : `<div class="empty">暂无家庭关系数据</div>`;
+
+    const npcs = Array.isArray(data.relationships)
+      ? data.relationships.filter(p => p && p.met !== false)
+      : [];
+    $("npc-relations").innerHTML = npcs.length
+      ? npcs.map(relationCard).join("")
+      : `<div class="empty">暂无人物关系</div>`;
+  }
+
+  function renderItems(data) {
+    const items = Array.isArray(data.resources?.items) ? data.resources.items : [];
+    $("item-list").innerHTML = items.length
+      ? items.map(item => `
+          <div class="item">
+            <div class="item-head">
+              <span>${escapeHTML(text(item.name, "未命名物品"))}</span>
+              <span>× ${escapeHTML(text(item.count, 0))}</span>
+            </div>
+            ${item.description ? `<div class="item-description">${escapeHTML(item.description)}</div>` : ""}
+          </div>`).join("")
+      : `<div class="empty">背包里暂时没有物品</div>`;
+  }
+
+  function renderStudentStatus(data) {
+    if (!data || typeof data !== "object") return;
+    currentData = data;
+
+    const w = data.world || {};
+    const p = data.player || {};
+    const c = data.condition || {};
+    const g = data.growth || {};
+
+    setText("date", w.date);
+    setText("time", w.time);
+    setText("weather", w.weather);
+    setText("location", w.location);
+    setText("period", w.period);
+    setText("player-name", p.name, "未登记");
+    setText("player-age", p.age_text || (p.age !== undefined ? `${p.age}岁` : "—"));
+    setText("player-gender", p.gender, "未登记");
+    setText("experience", g.experience, 0);
+    setText("mood", c.mood);
+
+    renderCore(c);
+    renderCharacter(data);
+    renderSchool(data);
+    renderRelations(data);
+    renderItems(data);
+
+    requestHeightReport();
+  }
+
+  window.renderStudentStatus = renderStudentStatus;
+
+  function activatePage(page) {
+    document.querySelectorAll(".tab").forEach(button => {
+      button.classList.toggle("active", button.dataset.page === page);
+    });
+    document.querySelectorAll(".page").forEach(panel => {
+      panel.classList.toggle("active", panel.id === `page-${page}`);
+    });
+    requestHeightReport();
+  }
+
+  document.querySelectorAll(".tab").forEach(button => {
+    button.addEventListener("click", () => activatePage(button.dataset.page));
+  });
+
+  function isValidStudentStatusData(data) {
+    return !!(
+      data &&
+      typeof data === "object" &&
+      !Array.isArray(data) &&
+      data.world && typeof data.world === "object" &&
+      data.player && typeof data.player === "object" &&
+      data.condition && typeof data.condition === "object" &&
+      data.attributes && typeof data.attributes === "object"
+    );
+  }
+
+  function notifyParentReady() {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        source: "student-sim-status-ui",
+        type: "STATUS_UI_READY",
+        version: "1.4C-UI"
+      }, "*");
+    }
+  }
+
+  let heightTimer = null;
+  function reportHeight() {
+    if (!(window.parent && window.parent !== window)) return;
+    const panel = document.querySelector(".panel");
+    const bodyHeight = Math.ceil(document.documentElement.scrollHeight);
+    const panelHeight = panel ? Math.ceil(panel.getBoundingClientRect().bottom + 14) : bodyHeight;
+    const height = Math.max(300, bodyHeight, panelHeight);
+    window.parent.postMessage({
+      source: "student-sim-status-ui",
+      type: "STATUS_HEIGHT",
+      version: "1.4C-UI",
+      height
+    }, "*");
+  }
+  function requestHeightReport() {
+    clearTimeout(heightTimer);
+    heightTimer = setTimeout(reportHeight, 30);
+  }
+
+  window.addEventListener("message", event => {
+    const message = event.data;
+    if (!message || typeof message !== "object") return;
+    if (message.source !== "student-sim" || message.type !== "STATUS_UPDATE") return;
+
+    const data = message.payload;
+    if (!isValidStudentStatusData(data)) {
+      console.warn("[学生时代模拟器][远程状态栏] 收到的数据格式不合法：", data);
+      return;
+    }
+
+    try {
+      renderStudentStatus(data);
+      hasReceivedRealData = true;
+      document.body.dataset.statusSource = "live";
+      console.log("[学生时代模拟器][远程状态栏] 已接收真实状态数据：", data);
+    } catch (error) {
+      console.error("[学生时代模拟器][远程状态栏] 渲染真实数据失败：", error);
+    }
+  });
+
+  window.addEventListener("load", requestHeightReport);
+  window.addEventListener("resize", requestHeightReport);
+
+  if ("ResizeObserver" in window) {
+    new ResizeObserver(requestHeightReport).observe(document.querySelector(".panel"));
+  }
+
+  renderStudentStatus(demoData);
+  document.body.dataset.statusSource = "demo";
+  activatePage("character");
+  notifyParentReady();
+
+  console.log("[学生时代模拟器][远程状态栏] V1.4C-UI 已启动。");
+})();
+  </script>
+
+</body>
+</html>
